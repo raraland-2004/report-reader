@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국제학교 성적표 뉘앙스 분석기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1B2B4B;
+    --navy-light: #2D4270;
+    --gold: #C8983F;
+    --gold-light: #E8B96A;
+    --cream: #FAF8F3;
+    --warm-gray: #F0EDE6;
+    --text-dark: #1A1A2E;
+    --text-mid: #4A4A6A;
+    --text-light: #8A8AAA;
+    --accent-pink: #E8637A;
+    --accent-teal: #2A9D8F;
+    --accent-purple: #7B5EA7;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--cream);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .serif { font-family: 'Noto Serif KR', serif; }
+
+  /* Header */
+  .hero-header {
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 1.5rem 2.5rem;
+  }
+  .hero-header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(200, 152, 63, 0.12);
+  }
+  .hero-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: rgba(200, 152, 63, 0.08);
+  }
+  .badge-pill {
+    display: inline-block;
+    background: rgba(200, 152, 63, 0.2);
+    border: 1px solid rgba(200, 152, 63, 0.4);
+    color: var(--gold-light);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+  }
+  .hero-title {
+    font-family: 'Noto Serif KR', serif;
+    color: #fff;
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+  .hero-subtitle {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+  .gold-line {
+    width: 36px; height: 3px;
+    background: var(--gold);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+
+  /* Input section */
+  .input-section {
+    background: #fff;
+    margin: 0;
+    padding: 1.75rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .comment-textarea {
+    width: 100%;
+    border: 1.5px solid #E5E0D8;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--text-dark);
+    background: var(--cream);
+    resize: none;
+    min-height: 140px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .comment-textarea:focus {
+    border-color: var(--navy-light);
+    box-shadow: 0 0 0 3px rgba(45, 66, 112, 0.1);
+    background: #fff;
+  }
+  .comment-textarea::placeholder { color: #AEAB9F; font-size: 0.83rem; }
+
+  .analyze-btn {
+    width: 100%;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.875rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .analyze-btn:active { transform: scale(0.98); }
+  .analyze-btn:hover { background: var(--navy-light); }
+  .analyze-btn .btn-inner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .analyze-btn .gold-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); flex-shrink: 0;
+  }
+
+  /* Spinner */
+  .spinner-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    gap: 1rem;
+  }
+  .spinner-overlay.active { display: flex; }
+  .spinner-ring {
+    width: 48px; height: 48px;
+    border: 3px solid #E5E0D8;
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-text { font-size: 0.85rem; color: var(--text-mid); }
+  .spinner-dots::after {
+    content: '';
+    animation: dots 1.2s steps(3, end) infinite;
+  }
+  @keyframes dots {
+    0%   { content: ''; }
+    33%  { content: '.'; }
+    66%  { content: '..'; }
+    100% { content: '...'; }
+  }
+
+  /* Results */
+  .results-section {
+    display: none;
+    padding: 1.5rem 1.5rem 3rem;
+  }
+  .results-section.active { display: block; }
+
+  .results-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .results-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .results-tag {
+    font-size: 11px; font-weight: 600;
+    background: rgba(200, 152, 63, 0.12);
+    color: var(--gold);
+    border: 1px solid rgba(200, 152, 63, 0.3);
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Result card */
+  .result-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.07);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    animation: cardIn 0.4s ease forwards;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  @keyframes cardIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-card:nth-child(1) { animation-delay: 0.05s; }
+  .result-card:nth-child(2) { animation-delay: 0.13s; }
+  .result-card:nth-child(3) { animation-delay: 0.21s; }
+  .result-card:nth-child(4) { animation-delay: 0.29s; }
+  .result-card:nth-child(5) { animation-delay: 0.37s; }
+  .result-card:nth-child(6) { animation-delay: 0.45s; }
+
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .card-label {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--navy);
+    flex: 1;
+    line-height: 1.35;
+  }
+  .card-chevron {
+    color: var(--text-light);
+    font-size: 1.1rem;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .card-chevron.open { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    padding: 0 1.1rem 1.1rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    font-size: 0.855rem;
+    line-height: 1.8;
+    color: var(--text-mid);
+  }
+  .card-body.open { display: block; }
+
+  /* Card color accents */
+  .icon-blue   { background: #EEF3FF; }
+  .icon-pink   { background: #FFF0F3; }
+  .icon-amber  { background: #FFF7E6; }
+  .icon-teal   { background: #E8F8F5; }
+  .icon-purple { background: #F4EFFF; }
+  .icon-navy   { background: #EEF2FA; }
+
+  .card-top-accent {
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .accent-blue   { background: linear-gradient(90deg, #4A72E8, #7B9EFF); }
+  .accent-pink   { background: linear-gradient(90deg, var(--accent-pink), #F4A3B3); }
+  .accent-amber  { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+  .accent-teal   { background: linear-gradient(90deg, var(--accent-teal), #3DC9B4); }
+  .accent-purple { background: linear-gradient(90deg, var(--accent-purple), #A47FD0); }
+  .accent-navy   { background: linear-gradient(90deg, var(--navy), var(--navy-light)); }
+
+  /* Content styling inside card body */
+  .insight-block {
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    margin-top: 0.875rem;
+    font-size: 0.82rem;
+    line-height: 1.75;
+    color: var(--text-dark);
+  }
+  .insight-block p { margin-bottom: 0.5rem; }
+  .insight-block p:last-child { margin-bottom: 0; }
+
+  .highlight-chip {
+    display: inline-block;
+    background: rgba(200,152,63,0.1);
+    color: #8B6420;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin: 2px;
+    border: 1px solid rgba(200,152,63,0.25);
+  }
+  .red-chip {
+    background: rgba(232,99,122,0.1);
+    color: #A8334A;
+    border-color: rgba(232,99,122,0.25);
+  }
+  .teal-chip {
+    background: rgba(42,157,143,0.1);
+    color: #1A6B61;
+    border-color: rgba(42,157,143,0.25);
+  }
+  .purple-chip {
+    background: rgba(123,94,167,0.1);
+    color: #5A3E88;
+    border-color: rgba(123,94,167,0.25);
+  }
+
+  .ptc-question {
+    background: #fff;
+    border: 1px solid #E5E0D8;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    margin-top: 0.75rem;
+  }
+  .ptc-question .num {
+    font-size: 0.72rem; font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .ptc-question .kor { font-size: 0.83rem; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+  .ptc-question .eng {
+    font-size: 0.78rem; color: var(--text-mid);
+    font-style: italic; line-height: 1.5;
+    border-top: 1px dashed #E5E0D8;
+    padding-top: 6px;
+    margin-top: 6px;
+  }
+
+  .warning-box {
+    background: rgba(232,99,122,0.07);
+    border-left: 3px solid var(--accent-pink);
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+    margin-top: 0.875rem;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-dark);
+  }
+  .tip-box {
+    background: rgba(42,157,143,0.07);
+    border-left: 3px solid var(--accent-teal);
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text-dark);
+  }
+
+  .divider {
+    height: 1px;
+    background: rgba(0,0,0,0.06);
+    margin: 1.5rem 0;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.4);
+    font-size: 0.73rem;
+    text-align: center;
+    padding: 1.75rem 1.5rem;
+    line-height: 1.7;
+  }
+
+  /* Subtle scroll hint */
+  .scroll-hint {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    font-size: 0.75rem; color: var(--text-light);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .scroll-hint::before, .scroll-hint::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E5E0D8;
+  }
+
+  /* ── MAP Test Section ── */
+  .section-divider {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1.5rem 1.5rem 0;
+  }
+  .section-divider-line { flex:1; height:1px; background:#E5E0D8; }
+  .section-divider-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    color: var(--text-light); white-space: nowrap;
+  }
+
+  .map-section {
+    background: #fff;
+    margin: 0;
+    padding: 1.5rem 1.5rem 1.75rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .map-badge-pill {
+    display: inline-block;
+    background: rgba(42,157,143,0.12);
+    border: 1px solid rgba(42,157,143,0.3);
+    color: #1A6B61;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 10px; border-radius: 100px;
+    margin-bottom: 0.75rem;
+  }
+  .map-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1rem; font-weight: 700;
+    color: var(--navy); margin-bottom: 0.35rem;
+  }
+  .map-desc {
+    font-size: 0.78rem; color: var(--text-mid); line-height: 1.6;
+    margin-bottom: 1.1rem;
+  }
+
+  /* MAP Input Form */
+  .map-input-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .map-input-group { display: flex; flex-direction: column; gap: 5px; }
+  .map-input-group.full { grid-column: 1 / -1; }
+  .map-input-label {
+    font-size: 0.73rem; font-weight: 700; color: var(--text-mid);
+    letter-spacing: 0.04em;
+  }
+  .map-input-field {
+    border: 1.5px solid #E5E0D8;
+    border-radius: 10px;
+    padding: 0.65rem 0.875rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--text-dark);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  .map-input-field:focus {
+    border-color: #2A9D8F;
+    box-shadow: 0 0 0 3px rgba(42,157,143,0.12);
+    background: #fff;
+  }
+  .map-input-field::placeholder { color: #AEAB9F; font-weight: 400; font-size:0.82rem; }
+  select.map-input-field { cursor: pointer; }
+
+  .subskill-section {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 10px;
+  }
+  .subskill-title {
+    font-size: 0.76rem; font-weight: 700; color: var(--text-mid);
+    letter-spacing: 0.04em; margin-bottom: 8px;
+  }
+  .subskill-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .subskill-row:last-child { margin-bottom: 0; }
+  .subskill-name { font-size: 0.8rem; color: var(--text-dark); flex: 1; }
+  .subskill-select {
+    border: 1.5px solid #E5E0D8; border-radius: 8px;
+    padding: 4px 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--text-dark); background: #fff;
+    outline: none; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .subskill-select:focus { border-color: #2A9D8F; }
+
+  .map-analyze-btn {
+    width: 100%;
+    background: #1A6B61;
+    color: #fff;
+    border: none; border-radius: 12px;
+    padding: 1rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; margin-top: 0.875rem;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .map-analyze-btn:hover { background: #145750; }
+  .map-analyze-btn:active { transform: scale(0.98); }
+  .map-analyze-btn:disabled {
+    background: #C5D5D3; cursor: not-allowed; transform: none;
+  }
+
+  /* MAP spinner */
+  .map-spinner-overlay {
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2.5rem 1.5rem; gap: 1rem;
+  }
+  .map-spinner-overlay.active { display: flex; }
+  .spinner-ring-teal {
+    width: 44px; height: 44px;
+    border: 3px solid #C5E8E4;
+    border-top-color: var(--accent-teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* MAP Results */
+  .map-results-section { display: none; padding: 0 1.5rem 2rem; }
+  .map-results-section.active { display: block; }
+
+  .map-results-header {
+    display: flex; align-items: center; gap: 10px;
+    margin: 1.5rem 0 1rem;
+    padding-top: 0.5rem;
+  }
+  .map-results-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1rem; font-weight: 700; color: #1A6B61;
+  }
+  .map-results-tag {
+    font-size: 11px; font-weight: 600;
+    background: rgba(42,157,143,0.12);
+    color: #1A6B61;
+    border: 1px solid rgba(42,157,143,0.3);
+    padding: 3px 10px; border-radius: 100px;
+    letter-spacing: 0.05em;
+  }
+
+  /* RIT score visual */
+  .rit-score-card {
+    background: var(--navy);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-top: 0.875rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .rit-number {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 2.8rem; font-weight: 700;
+    color: var(--gold-light); line-height: 1;
+    flex-shrink: 0;
+  }
+  .rit-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); letter-spacing:0.05em; margin-bottom:4px; }
+  .rit-desc { font-size: 0.8rem; color: rgba(255,255,255,0.85); line-height: 1.5; }
+  .rit-vs-avg {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px;
+  }
+  .rit-vs-avg .above-badge {
+    background: rgba(200,152,63,0.25); color: var(--gold-light);
+    font-size: 0.72rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 100px;
+    border: 1px solid rgba(200,152,63,0.4);
+  }
+  .rit-vs-avg .avg-text {
+    font-size: 0.73rem; color: rgba(255,255,255,0.45);
+  }
+
+  /* Progress bar for sub-skills */
+  .skill-row { margin-bottom: 0.875rem; }
+  .skill-row-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px;
+  }
+  .skill-name { font-size: 0.82rem; font-weight: 600; color: var(--text-dark); }
+  .skill-level {
+    font-size: 0.73rem; font-weight: 700; padding: 2px 9px; border-radius: 100px;
+  }
+  .level-hiavg { background: rgba(42,157,143,0.12); color: #1A6B61; border: 1px solid rgba(42,157,143,0.3); }
+  .level-avg   { background: rgba(200,152,63,0.12); color: #8B6420; border: 1px solid rgba(200,152,63,0.3); }
+  .level-low   { background: rgba(232,99,122,0.12); color: #A8334A; border: 1px solid rgba(232,99,122,0.3); }
+
+  .skill-bar-bg { height: 7px; background: #F0EDE6; border-radius: 100px; overflow: hidden; }
+  .skill-bar-fill { height: 100%; border-radius: 100px; }
+  .skill-note { font-size: 0.76rem; color: var(--text-light); margin-top: 4px; line-height: 1.5; }
+
+  /* Book card */
+  .book-card {
+    background: #fff;
+    border: 1px solid #E5E0D8;
+    border-radius: 12px;
+    padding: 0.875rem 1rem;
+    margin-top: 0.75rem;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .book-emoji { font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+  .book-title-row { font-size: 0.83rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+  .book-lexile { font-size: 0.73rem; font-weight: 600; color: var(--accent-teal); }
+  .book-desc { font-size: 0.78rem; color: var(--text-mid); line-height: 1.5; margin-top: 3px; }
+  .book-category-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--text-light); text-transform: uppercase;
+    margin: 1rem 0 0.5rem; display: block;
+  }
+
+  /* MAP card accents */
+  .accent-green  { background: linear-gradient(90deg, #2A9D8F, #3DC9B4); }
+  .accent-indigo { background: linear-gradient(90deg, #4A72E8, #7B9EFF); }
+  .accent-orange { background: linear-gradient(90deg, #E8863F, #F4AA6A); }
+  .accent-forest { background: linear-gradient(90deg, #3B7A4E, #5AAD72); }
+  .icon-green  { background: #E8F8F5; }
+  .icon-indigo { background: #EEF3FF; }
+  .icon-orange { background: #FFF4EC; }
+  .icon-forest { background: #EAF5EE; }
+
+  /* Reset button */
+  .reset-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    width: 100%; padding: 0.875rem;
+    background: transparent;
+    border: 1.5px solid #E5E0D8;
+    border-radius: 12px;
+    color: var(--text-mid);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.85rem; font-weight: 500;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: var(--navy); color: var(--navy); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hero-header">
+  <div style="position:relative; z-index:1;">
+    <span class="badge-pill">✦ AI 성적표 해독기</span>
+    <h1 class="hero-title">국제학교 성적표<br>뉘앙스 분석기</h1>
+    <div class="gold-line"></div>
+    <p class="hero-subtitle">선생님 코멘트의 숨은 뉘앙스 분석 +<br>MAP 테스트 결과 렉사일 · 도서 추천까지</p>
+  </div>
+</header>
+
+<!-- INPUT SECTION -->
+<section class="input-section" id="inputSection">
+  <p class="section-label">성적표 코멘트 입력</p>
+  <textarea
+    id="commentInput"
+    class="comment-textarea"
+    rows="6"
+    placeholder="담임 선생님의 영문 코멘트를 여기에 붙여넣어 주세요.
+
+예: Sophia is a vibrant and imaginative student who brings wonderful energy to the classroom..."
+  ></textarea>
+  <button class="analyze-btn" id="analyzeBtn" onclick="startAnalysis()">
+    <span class="btn-inner">
+      <span class="gold-dot"></span>
+      선생님 속마음 분석 시작하기
+      <span class="gold-dot"></span>
+    </span>
+  </button>
+</section>
+
+<!-- MAP SECTION DIVIDER -->
+<div class="section-divider">
+  <div class="section-divider-line"></div>
+  <span class="section-divider-label">NWEA MAP 테스트 분석</span>
+  <div class="section-divider-line"></div>
+</div>
+
+<!-- MAP INPUT -->
+<section class="map-section" id="mapInputSection">
+  <span class="map-badge-pill">📊 MAP 리포트 해석기</span>
+  <h2 class="map-title">MAP 테스트 결과 분석</h2>
+  <p class="map-desc">
+    결과지를 보면서 아래 항목을 직접 입력해 주세요.<br>
+    RIT 점수만 있어도 렉사일 지수와 도서 추천까지 분석됩니다.
+  </p>
+
+  <div class="map-input-grid">
+    <div class="map-input-group">
+      <label class="map-input-label">학년 (Grade)</label>
+      <select id="mapGrade" class="map-input-field">
+        <option value="">선택</option>
+        <option value="1">1학년</option>
+        <option value="2">2학년</option>
+        <option value="3">3학년</option>
+        <option value="4" selected>4학년</option>
+        <option value="5">5학년</option>
+        <option value="6">6학년</option>
+        <option value="7">7학년</option>
+        <option value="8">8학년</option>
+        <option value="9">9학년</option>
+        <option value="10">10학년</option>
+      </select>
+    </div>
+    <div class="map-input-group">
+      <label class="map-input-label">학기 (Term)</label>
+      <select id="mapTerm" class="map-input-field">
+        <option value="">선택</option>
+        <option value="Fall">가을 (Fall)</option>
+        <option value="Winter" selected>겨울 (Winter)</option>
+        <option value="Spring">봄 (Spring)</option>
+      </select>
+    </div>
+    <div class="map-input-group">
+      <label class="map-input-label">Reading RIT 점수</label>
+      <input type="number" id="mapRitScore" class="map-input-field" placeholder="예: 206" min="100" max="350" oninput="onRitInput()">
+    </div>
+    <div class="map-input-group">
+      <label class="map-input-label">학년 평균 (Norm)</label>
+      <input type="number" id="mapNormScore" class="map-input-field" placeholder="예: 199" min="100" max="350">
+    </div>
+  </div>
+
+  <div class="subskill-section">
+    <div class="subskill-title">📋 세부 영역 성취 수준 (선택 입력)</div>
+    <div class="subskill-row">
+      <span class="subskill-name">📰 Informational Text</span>
+      <select id="subInfo" class="subskill-select">
+        <option value="HiAvg">HiAvg (상위평균)</option>
+        <option value="Avg" selected>Avg (평균)</option>
+        <option value="LoAvg">LoAvg (하위평균)</option>
+        <option value="Low">Low (보완필요)</option>
+      </select>
+    </div>
+    <div class="subskill-row">
+      <span class="subskill-name">🔤 Vocabulary</span>
+      <select id="subVocab" class="subskill-select">
+        <option value="HiAvg">HiAvg (상위평균)</option>
+        <option value="Avg" selected>Avg (평균)</option>
+        <option value="LoAvg">LoAvg (하위평균)</option>
+        <option value="Low">Low (보완필요)</option>
+      </select>
+    </div>
+    <div class="subskill-row">
+      <span class="subskill-name">📖 Literary Text</span>
+      <select id="subLit" class="subskill-select">
+        <option value="HiAvg">HiAvg (상위평균)</option>
+        <option value="Avg" selected>Avg (평균)</option>
+        <option value="LoAvg">LoAvg (하위평균)</option>
+        <option value="Low">Low (보완필요)</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="map-analyze-btn" id="mapAnalyzeBtn" onclick="startMapAnalysis()" disabled>
+    MAP 결과 분석 시작하기 →
+  </button>
+</section>
+
+<!-- MAP SPINNER -->
+<div class="map-spinner-overlay" id="mapSpinnerOverlay">
+  <div class="spinner-ring-teal"></div>
+  <p class="spinner-text">MAP 결과를 분석하고 있습니다<span class="spinner-dots"></span></p>
+  <p style="font-size:0.75rem; color:#AEAB9F; text-align:center; line-height:1.6;">RIT 점수 → 렉사일 변환 중<br>세부 영역 및 도서 추천 준비 중</p>
+</div>
+
+<!-- MAP RESULTS -->
+<div class="map-results-section" id="mapResultsSection">
+  <div class="map-results-header">
+    <h2 class="map-results-title">MAP 분석 결과</h2>
+    <span class="map-results-tag">분석 완료</span>
+  </div>
+
+  <!-- MAP Card 1: RIT 점수 -->
+  <div class="result-card" id="mcard1">
+    <div class="card-top-accent accent-green"></div>
+    <div class="card-header" onclick="toggleCard('mcard1')">
+      <div class="card-icon icon-green">📈</div>
+      <span class="card-label">Reading RIT 점수 확인</span>
+      <span class="card-chevron" id="chevron-mcard1">▼</span>
+    </div>
+    <div class="card-body" id="body-mcard1">
+      <div class="rit-score-card">
+        <div>
+          <div class="rit-label">WI26 현재 점수</div>
+          <div class="rit-number">206</div>
+        </div>
+        <div style="flex:1;">
+          <div class="rit-desc">2026년 겨울 학기 기준<br>미국 4학년 Reading RIT</div>
+          <div class="rit-vs-avg">
+            <span class="above-badge">+7점 상회</span>
+            <span class="avg-text">학년 평균 199점</span>
+          </div>
+        </div>
+      </div>
+      <div class="insight-block" style="margin-top:0.875rem;">
+        <p><strong>이 점수가 의미하는 것:</strong></p>
+        <p>아정이는 현재 미국 4학년(Grade 4) 겨울 학기 전국 평균(199점)을 훨씬 웃도는 <strong>206점</strong>을 기록하고 있습니다. 학기별 성장 그래프(파란색 막대)를 보면 지속적인 상승세가 뚜렷합니다.</p>
+        <p>국제학교 4학년으로서 <strong>영어 원어민 학생들과 대등한 수준</strong>의 읽기 능력을 보여주는 훌륭한 점수입니다.</p>
+      </div>
+      <div style="margin-top:0.875rem;">
+        <span class="teal-chip">📊 상위 약 30% 수준</span>
+        <span class="teal-chip">📈 꾸준한 성장세</span>
+        <span class="highlight-chip">학년 평균 초과</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP Card 2: 렉사일 예측 -->
+  <div class="result-card" id="mcard2">
+    <div class="card-top-accent accent-indigo"></div>
+    <div class="card-header" onclick="toggleCard('mcard2')">
+      <div class="card-icon icon-indigo">📚</div>
+      <span class="card-label">Reading RIT 206점 기반 렉사일 지수 예측</span>
+      <span class="card-chevron" id="chevron-mcard2">▼</span>
+    </div>
+    <div class="card-body" id="body-mcard2">
+      <div style="background: #F4F8FF; border-radius: 12px; padding: 1rem 1.1rem; margin-top:0.875rem; text-align:center;">
+        <div style="font-size:0.73rem; color:#4A72E8; font-weight:700; letter-spacing:0.08em; margin-bottom:4px;">예측 렉사일 지수 (중간값)</div>
+        <div style="font-family:'Noto Serif KR',serif; font-size:2.4rem; font-weight:700; color:#2D4270; line-height:1;">685L</div>
+        <div style="font-size:0.76rem; color:#8A8AAA; margin-top:4px;">범위: 610L ~ 760L</div>
+      </div>
+      <div class="insight-block" style="margin-top:0.875rem;">
+        <p><strong>이 점수의 의미 (미국 학년 기준):</strong></p>
+        <p>미국 4학년 상위권 ~ 5학년 평균 수준의 독서 능력입니다. 국제학교 4학년 학생으로서 영어를 모국어처럼 사용하는 미국 현지 4~5학년 아이들과 <strong>대등하게 책을 읽고 이해</strong>할 수 있는 훌륭한 레벨입니다.</p>
+      </div>
+      <div class="warning-box" style="background:rgba(74,114,232,0.07); border-left-color:#4A72E8; margin-top:0.875rem;">
+        📌 <strong>부모님 활용법:</strong> 서점이나 도서관에서 책을 고를 때 "700L 전후"를 기준으로 선택하시면 딱 맞습니다. 렉사일 숫자가 책 뒷면이나 온라인 검색으로 확인 가능합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP Card 3: 세부 영역 분석 -->
+  <div class="result-card" id="mcard3">
+    <div class="card-top-accent accent-orange"></div>
+    <div class="card-header" onclick="toggleCard('mcard3')">
+      <div class="card-icon icon-orange">🔬</div>
+      <span class="card-label">세부 영역(Reading Goals) 분석</span>
+      <span class="card-chevron" id="chevron-mcard3">▼</span>
+    </div>
+    <div class="card-body" id="body-mcard3">
+      <p style="font-size:0.78rem; color:var(--text-mid); line-height:1.6; margin-bottom:1rem;">성적표 중하단의 세부 성적(Winter 2025-2026) 분석입니다.</p>
+
+      <div class="skill-row">
+        <div class="skill-row-top">
+          <span class="skill-name">📰 Informational Text (비문학)</span>
+          <span class="skill-level level-hiavg">HiAvg</span>
+        </div>
+        <div class="skill-bar-bg">
+          <div class="skill-bar-fill" style="width:78%; background: linear-gradient(90deg,#2A9D8F,#3DC9B4);"></div>
+        </div>
+        <div class="skill-note">과학·역사·뉴스 등 사실 기반 지문 이해 능력이 뛰어납니다. 730L~760L 난이도 비문학도 소화 가능합니다.</div>
+      </div>
+
+      <div class="skill-row">
+        <div class="skill-row-top">
+          <span class="skill-name">🔤 Vocabulary (어휘력)</span>
+          <span class="skill-level level-hiavg">HiAvg</span>
+        </div>
+        <div class="skill-bar-bg">
+          <div class="skill-bar-fill" style="width:74%; background: linear-gradient(90deg,#2A9D8F,#3DC9B4);"></div>
+        </div>
+        <div class="skill-note">문맥으로 단어 뜻을 유추하는 능력이 뛰어납니다. 책을 읽다 모르는 단어가 나와도 흐름을 놓치지 않는 힘이 있습니다.</div>
+      </div>
+
+      <div class="skill-row">
+        <div class="skill-row-top">
+          <span class="skill-name">📖 Literary Text (문학/소설)</span>
+          <span class="skill-level level-avg">Avg</span>
+        </div>
+        <div class="skill-bar-bg">
+          <div class="skill-bar-fill" style="width:52%; background: linear-gradient(90deg,#C8983F,#E8B96A);"></div>
+        </div>
+        <div class="skill-note">인물 감정선·복선·주제 파악 영역. 다른 영역 대비 '평균' 수치로, 소설 독서량을 늘리면 700L+대로 올릴 수 있습니다.</div>
+      </div>
+
+      <div class="warning-box" style="margin-top:0.5rem;">
+        🎯 <strong>집중 공략 포인트:</strong> Literary Text를 HiAvg로 올리는 것이 다음 목표입니다. 이야기 구조가 풍부한 소설을 꾸준히 읽는 것이 가장 효과적입니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP Card 4: 추천 도서 -->
+  <div class="result-card" id="mcard4">
+    <div class="card-top-accent accent-forest"></div>
+    <div class="card-header" onclick="toggleCard('mcard4')">
+      <div class="card-icon icon-forest">🌿</div>
+      <span class="card-label">아이(685L)를 위한 추천 도서 가이드</span>
+      <span class="card-chevron" id="chevron-mcard4">▼</span>
+    </div>
+    <div class="card-body" id="body-mcard4">
+      <p style="font-size:0.78rem; color:var(--text-mid); line-height:1.6; margin-bottom:0.5rem;">강점인 비문학은 유지하면서 약한 문학 영역을 보완할 600~700L대 원서를 추천합니다.</p>
+
+      <span class="book-category-label">📖 문학 — 소설 재미 붙이기 (600L대)</span>
+
+      <div class="book-card">
+        <div class="book-emoji">🕷️</div>
+        <div>
+          <div class="book-title-row">《Charlotte's Web》 by E.B. White</div>
+          <div class="book-lexile">680L</div>
+          <div class="book-desc">감정선이 풍부하고 어휘가 아름다운 명작 소설. Literary Text 약점을 보완하기에 최적입니다.</div>
+        </div>
+      </div>
+
+      <div class="book-card">
+        <div class="book-emoji">⚡</div>
+        <div>
+          <div class="book-title-row">《The Lightning Thief》 Percy Jackson</div>
+          <div class="book-lexile">680L</div>
+          <div class="book-desc">판타지를 좋아하는 아이라면 몰입해서 읽기 좋은 책. 시리즈물이라 독서 습관 만들기에도 효과적입니다.</div>
+        </div>
+      </div>
+
+      <span class="book-category-label" style="margin-top:1.1rem;">📰 비문학 — 강점 강화하기 (700L대)</span>
+
+      <div class="book-card">
+        <div class="book-emoji">🏛️</div>
+        <div>
+          <div class="book-title-row">《Who Was...?》 시리즈</div>
+          <div class="book-lexile">650L ~ 750L</div>
+          <div class="book-desc">높은 비문학 이해도에 딱 맞는 위인·역사 시리즈. 국제학교 사회(I&S) 과목 배경지식 쌓기에도 최고입니다.</div>
+        </div>
+      </div>
+
+      <div class="tip-box" style="margin-top:0.875rem;">
+        💡 <strong>도서 선택 꿀팁:</strong> lexile.com 또는 Amazon에서 책 제목 검색 시 렉사일 지수가 표시됩니다. "600L~750L"로 필터링하면 딱 맞는 책들을 쉽게 찾을 수 있어요.
+      </div>
+    </div>
+  </div>
+
+  <div style="height:1rem;"></div>
+</div>
+
+<!-- COMMENT LOADING -->
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-ring"></div>
+  <p class="spinner-text">AI가 뉘앙스를 분석하고 있습니다<span class="spinner-dots"></span></p>
+  <p style="font-size:0.75rem; color:#AEAB9F; text-align:center; line-height:1.6;">선생님의 완곡한 표현 뒤에<br>숨겨진 진짜 의미를 해독 중이에요</p>
+</div>
+
+<!-- RESULTS -->
+<section class="results-section" id="resultsSection">
+  <div class="results-header">
+    <h2 class="results-title">분석 결과</h2>
+    <span class="results-tag">AI 완료</span>
+  </div>
+
+  <!-- Card 1: 학교에서의 우리 아이 성향 -->
+  <div class="result-card" id="card1">
+    <div class="card-top-accent accent-blue"></div>
+    <div class="card-header" onclick="toggleCard('card1')">
+      <div class="card-icon icon-blue">🎭</div>
+      <span class="card-label">학교에서의 우리 아이 성향</span>
+      <span class="card-chevron" id="chevron-card1">▼</span>
+    </div>
+    <div class="card-body" id="body-card1">
+      <div class="insight-block">
+        <p><strong>한 줄 요약:</strong> 에너지가 넘치고 창의적인 '무대의 주인공' 타입입니다.</p>
+        <p>선생님이 사용한 <em>"vibrant"</em>, <em>"enthusiastic"</em>, <em>"energetic"</em> 등의 표현은 국제학교에서 매우 전략적으로 선택된 단어들입니다. 이 아이는 조용히 앉아서 수업을 따라가는 스타일이 아니라, 수업 분위기 자체를 자신이 주도하려는 성향이 강합니다.</p>
+        <p>교실 안에서 존재감이 크고, 발표나 그룹 활동에서는 자연스럽게 주목받는 위치에 있을 가능성이 높습니다.</p>
+      </div>
+      <div style="margin-top:0.875rem;">
+        <span class="highlight-chip">창의력 상위권</span>
+        <span class="highlight-chip">발표력 우수</span>
+        <span class="red-chip">자기조절력 개발 중</span>
+        <span class="highlight-chip">주도형 기질</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: 친구 관계 및 사회성 -->
+  <div class="result-card" id="card2">
+    <div class="card-top-accent accent-pink"></div>
+    <div class="card-header" onclick="toggleCard('card2')">
+      <div class="card-icon icon-pink">👭</div>
+      <span class="card-label">친구 관계 및 사회성</span>
+      <span class="card-chevron" id="chevron-card2">▼</span>
+    </div>
+    <div class="card-body" id="body-card2">
+      <div class="insight-block">
+        <p><strong>한 줄 요약:</strong> 인기 있지만, 관계의 '질' 보다 '양'에 집중하는 편입니다.</p>
+        <p><em>"enjoys working with peers"</em>라는 표현은 사교성이 좋다는 뜻이지만, 뒤에 이어지는 <em>"learning to listen to others' ideas"</em>라는 코멘트가 핵심입니다. 이는 그룹 활동에서 자기 의견을 너무 강하게 밀어붙여 친구들의 말을 끊는 장면이 있었다는 완곡한 신호입니다.</p>
+        <p>또래 사이에서 영향력이 있는 아이이지만, 때로 그 에너지가 다른 아이들에게 부담이 되기도 합니다. 선생님은 이 아이가 <strong>리더십과 배려심을 동시에</strong> 키워주기를 바라고 있습니다.</p>
+      </div>
+      <div class="tip-box">
+        💡 <strong>집에서 해보세요:</strong> "오늘 모둠 활동에서 친구 아이디어 중에 제일 좋았던 게 뭐야?"라고 질문해 보세요. 다른 사람의 의견에 귀 기울이는 연습이 됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: 선생님이 강조하는 보완점 -->
+  <div class="result-card" id="card3">
+    <div class="card-top-accent accent-amber"></div>
+    <div class="card-header" onclick="toggleCard('card3')">
+      <div class="card-icon icon-amber">🔍</div>
+      <span class="card-label">선생님이 강조하는 보완점 (숨은 뉘앙스)</span>
+      <span class="card-chevron" id="chevron-card3">▼</span>
+    </div>
+    <div class="card-body" id="body-card3">
+      <p style="font-size:0.8rem; color:var(--accent-pink); font-weight:600; margin-bottom:0.75rem;">⚠️ 이 섹션이 가장 중요합니다. 선생님의 '영국식 완곡어법'을 해독합니다.</p>
+      <div class="warning-box">
+        <strong>"would benefit from…"</strong> = 현재 이게 부족합니다.<br><br>
+        선생님이 <em>"Sophia would benefit from developing stronger focus during independent work time"</em>라고 썼다면, 이것은 "혼자 과제 할 때 집중을 못 하고 산만합니다"의 외교적 표현입니다.
+      </div>
+      <div class="warning-box" style="margin-top:0.75rem;">
+        <strong>"is beginning to…"</strong> = 아직 못 하고 있어요.<br><br>
+        <em>"is beginning to understand the importance of task completion"</em>은 "과제를 끝까지 마무리하는 습관이 아직 형성되지 않았습니다"를 의미합니다.
+      </div>
+      <div class="warning-box" style="margin-top:0.75rem;">
+        <strong>"with continued support…"</strong> = 부모님도 함께 도와주셔야 합니다.<br><br>
+        이 표현이 등장하면 학교만의 노력으로는 한계가 있고, <strong>가정에서의 지속적인 개입</strong>이 필요하다는 신호입니다.
+      </div>
+      <div class="insight-block" style="margin-top:0.875rem;">
+        <p><strong>핵심 보완점 요약:</strong></p>
+        <p>① 수업 중 집중력 유지 (특히 흥미 없는 과목)<br>
+        ② 시작한 일을 끝까지 마무리하는 습관<br>
+        ③ 충동적으로 말하기 전에 한 번 더 생각하기</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: 우리 아이만의 강점 -->
+  <div class="result-card" id="card4">
+    <div class="card-top-accent accent-teal"></div>
+    <div class="card-header" onclick="toggleCard('card4')">
+      <div class="card-icon icon-teal">⭐</div>
+      <span class="card-label">우리 아이만의 강점</span>
+      <span class="card-chevron" id="chevron-card4">▼</span>
+    </div>
+    <div class="card-body" id="body-card4">
+      <div class="insight-block">
+        <p><strong>선생님이 진심으로 인정하는 재능들입니다.</strong></p>
+        <p>코멘트에서 조건 없이 칭찬받은 부분들—예를 들어 <em>"creative thinking"</em>, <em>"imaginative approach to problem-solving"</em>, <em>"natural storyteller"</em>—이런 표현들은 선생님이 진심으로 아이의 장점으로 보는 것들입니다.</p>
+      </div>
+      <div style="margin-top:0.875rem;">
+        <span class="teal-chip">🎨 창의적 사고</span>
+        <span class="teal-chip">📖 스토리텔링</span>
+        <span class="teal-chip">💬 언어 표현력</span>
+        <span class="teal-chip">🎤 발표 자신감</span>
+        <span class="purple-chip">🧩 독창적 문제해결</span>
+      </div>
+      <div class="tip-box" style="margin-top:0.875rem;">
+        💎 <strong>부모님께:</strong> 이 강점들은 AI 시대에 정말 귀한 역량입니다. 창의성과 스토리텔링은 학업 성적보다 훨씬 오래, 멀리 갑니다. 지금의 산만함보다 이 강점을 더 크게 봐 주세요.
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 5: 선생님의 속마음 -->
+  <div class="result-card" id="card5">
+    <div class="card-top-accent accent-purple"></div>
+    <div class="card-header" onclick="toggleCard('card5')">
+      <div class="card-icon icon-purple">💬</div>
+      <span class="card-label">코멘트에서 읽히는 선생님의 속마음</span>
+      <span class="card-chevron" id="chevron-card5">▼</span>
+    </div>
+    <div class="card-body" id="body-card5">
+      <div class="insight-block">
+        <p>선생님은 이 아이를 <strong>부담스럽지만 매력적인 학생</strong>으로 보고 있습니다. 코멘트 전체의 톤이 따뜻하고 분량도 충분하다는 것 자체가 긍정적 신호입니다. 관심 없는 학생에게 선생님은 짧고 무난한 코멘트만 씁니다.</p>
+        <p>다만 속으로는 이런 생각을 하고 있을 가능성이 높습니다:</p>
+      </div>
+      <div class="warning-box">
+        😮‍💨 <em>"이 아이는 재능이 넘치는데, 그 에너지를 조금만 조절해줬으면…"</em>
+      </div>
+      <div class="warning-box" style="margin-top:0.75rem;">
+        🙏 <em>"부모님이 집에서도 집중력과 마무리 습관을 좀 잡아주셨으면 좋겠다."</em>
+      </div>
+      <div class="tip-box" style="margin-top:0.75rem;">
+        ✅ <em>"이 아이가 자기를 조절하는 법을 배우면, 정말 대단한 사람이 될 것 같다."</em>
+      </div>
+      <div class="insight-block" style="margin-top:0.875rem;">
+        <p><strong>결론:</strong> 선생님은 이 아이에게 가능성을 보고 있으며, 포기한 것이 아닙니다. 상담 때 적극적으로 소통하면 좋은 파트너십을 만들 수 있는 선생님입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 6: PTC 질문 -->
+  <div class="result-card" id="card6">
+    <div class="card-top-accent accent-navy"></div>
+    <div class="card-header" onclick="toggleCard('card6')">
+      <div class="card-icon icon-navy">🗣️</div>
+      <span class="card-label">학부모 상담(PTC) 때 물어볼 질문 3가지</span>
+      <span class="card-chevron" id="chevron-card6">▼</span>
+    </div>
+    <div class="card-body" id="body-card6">
+      <p style="font-size:0.8rem; color:var(--text-mid); margin-bottom:0.875rem; line-height:1.6;">이 질문들을 준비해 가시면 상담 시간을 훨씬 알차게 쓸 수 있습니다.</p>
+
+      <div class="ptc-question">
+        <div class="num">QUESTION 01</div>
+        <div class="kor">어떤 상황에서 집중력이 가장 많이 떨어지나요? 특정 과목이나 활동 유형이 있나요?</div>
+        <div class="eng">"Could you tell me more specifically when Sophia tends to lose focus? Is it during particular subjects or types of tasks?"</div>
+      </div>
+
+      <div class="ptc-question">
+        <div class="num">QUESTION 02</div>
+        <div class="kor">집에서 마무리 습관을 키워주려면 어떻게 하면 좋을까요? 구체적인 방법을 알려주실 수 있나요?</div>
+        <div class="eng">"What strategies would you recommend for us at home to help her build better habits around completing tasks independently?"</div>
+      </div>
+
+      <div class="ptc-question">
+        <div class="num">QUESTION 03</div>
+        <div class="kor">아이의 창의성과 에너지를 학교에서 긍정적으로 발휘할 수 있는 기회가 있나요? (예: 클럽, 발표 기회 등)</div>
+        <div class="eng">"Are there any clubs, projects, or leadership opportunities at school where her creativity and energy could be channeled in a more structured way?"</div>
+      </div>
+
+      <div class="tip-box" style="margin-top:0.875rem;">
+        💡 <strong>상담 꿀팁:</strong> 질문 전에 먼저 <em>"Thank you for your detailed and thoughtful comments — we really appreciate it."</em>로 시작하세요. 선생님과의 관계가 훨씬 따뜻해집니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="scroll-hint">다른 코멘트 분석하기</div>
+  <button class="reset-btn" onclick="resetApp()">
+    ↩ 처음으로 돌아가기
+  </button>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>이 분석은 AI 기반으로 생성되며 참고용입니다.</p>
+  <p>최종 판단은 항상 담임 선생님과의 직접 소통을 통해 해주세요.</p>
+  <p style="margin-top:0.5rem; opacity:0.5;">© 2025 국제학교 성적표 뉘앙스 분석기</p>
+</footer>
+
+<script>
+// ── Comment Analysis ──
+function startAnalysis() {
+  const input = document.getElementById('commentInput').value.trim();
+  if (!input) {
+    document.getElementById('commentInput').style.borderColor = '#E8637A';
+    setTimeout(() => { document.getElementById('commentInput').style.borderColor = '#E5E0D8'; }, 2000);
+    return;
+  }
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('spinnerOverlay').classList.add('active');
+  document.getElementById('resultsSection').classList.remove('active');
+  setTimeout(() => {
+    document.getElementById('spinnerOverlay').classList.remove('active');
+    document.getElementById('resultsSection').classList.add('active');
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toggleCard('card1');
+  }, 2200);
+}
+
+// ── Accordion ──
+function toggleCard(cardId) {
+  const body = document.getElementById('body-' + cardId);
+  const chevron = document.getElementById('chevron-' + cardId);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+// ── RIT → Lexile table (NWEA linking study) ──
+const RIT_LEXILE = [
+  {rit:140,mid:0,lo:0,hi:100},{rit:150,mid:50,lo:0,hi:200},
+  {rit:155,mid:130,lo:50,hi:250},{rit:160,mid:215,lo:100,hi:330},
+  {rit:165,mid:300,lo:170,hi:420},{rit:170,mid:390,lo:240,hi:510},
+  {rit:175,mid:475,lo:325,hi:600},{rit:180,mid:555,lo:400,hi:680},
+  {rit:185,mid:615,lo:465,hi:730},{rit:190,mid:650,lo:500,hi:760},
+  {rit:195,mid:670,lo:540,hi:780},{rit:200,mid:690,lo:570,hi:790},
+  {rit:205,mid:705,lo:600,hi:805},{rit:210,mid:730,lo:640,hi:830},
+  {rit:215,mid:770,lo:680,hi:870},{rit:220,mid:820,lo:730,hi:920},
+  {rit:225,mid:880,lo:790,hi:980},{rit:230,mid:940,lo:850,hi:1040},
+  {rit:235,mid:1000,lo:910,hi:1100},{rit:240,mid:1060,lo:970,hi:1160},
+  {rit:245,mid:1110,lo:1020,hi:1210},{rit:250,mid:1160,lo:1070,hi:1260},
+  {rit:255,mid:1200,lo:1110,hi:1300},{rit:260,mid:1230,lo:1140,hi:1330},
+];
+
+// Grade norms (Winter) — NWEA 2020
+const GRADE_NORMS = {
+  1:{fall:167.7,winter:174.4,spring:179.8},
+  2:{fall:179.8,winter:185.4,spring:190.0},
+  3:{fall:188.3,winter:193.0,spring:196.6},
+  4:{fall:194.5,winter:198.6,spring:201.8},
+  5:{fall:200.8,winter:204.1,spring:206.8},
+  6:{fall:206.0,winter:208.9,spring:211.1},
+  7:{fall:209.1,winter:211.7,spring:213.4},
+  8:{fall:212.0,winter:214.2,spring:215.7},
+  9:{fall:214.1,winter:215.9,spring:217.0},
+  10:{fall:215.9,winter:217.4,spring:218.3},
+};
+
+function getLexile(rit) {
+  if (rit <= RIT_LEXILE[0].rit) return {...RIT_LEXILE[0]};
+  if (rit >= RIT_LEXILE[RIT_LEXILE.length-1].rit) return {...RIT_LEXILE[RIT_LEXILE.length-1]};
+  for (let i = 0; i < RIT_LEXILE.length - 1; i++) {
+    if (rit >= RIT_LEXILE[i].rit && rit <= RIT_LEXILE[i+1].rit) {
+      const t = (rit - RIT_LEXILE[i].rit) / (RIT_LEXILE[i+1].rit - RIT_LEXILE[i].rit);
+      return {
+        mid: Math.round(RIT_LEXILE[i].mid + t*(RIT_LEXILE[i+1].mid - RIT_LEXILE[i].mid)),
+        lo:  Math.round(RIT_LEXILE[i].lo  + t*(RIT_LEXILE[i+1].lo  - RIT_LEXILE[i].lo)),
+        hi:  Math.round(RIT_LEXILE[i].hi  + t*(RIT_LEXILE[i+1].hi  - RIT_LEXILE[i].hi)),
+      };
+    }
+  }
+  return {...RIT_LEXILE[RIT_LEXILE.length-1]};
+}
+
+function getGradeEquivalent(rit) {
+  const terms = ['fall','winter','spring'];
+  const termKorMap = {fall:'가을',winter:'겨울',spring:'봄'};
+  let closest = {grade:4,term:'winter',diff:999};
+  for (let g = 1; g <= 10; g++) {
+    for (const t of terms) {
+      const diff = Math.abs(rit - GRADE_NORMS[g][t]);
+      if (diff < closest.diff) closest = {grade:g,term:t,diff};
+    }
+  }
+  return `미국 ${closest.grade}학년 ${termKorMap[closest.term]} 학기 수준`;
+}
+
+const SUBSKILL_NOTES = {
+  info:{
+    HiAvg:'과학·역사·뉴스 등 사실 기반 지문 이해가 뛰어납니다. 730L 이상 비문학도 소화 가능합니다.',
+    Avg:'비문학 지문을 전반적으로 잘 이해합니다. 다양한 분야의 읽기 경험을 쌓으면 더욱 좋아집니다.',
+    LoAvg:'비문학 지문에서 핵심 정보를 찾는 연습이 필요합니다. 짧은 뉴스 기사부터 시작해 보세요.',
+    Low:'설명문·비문학 읽기를 집중적으로 보완해야 합니다. 쉬운 백과사전류 읽기부터 시작하세요.',
+  },
+  vocab:{
+    HiAvg:'문맥으로 단어 뜻을 유추하는 능력이 뛰어납니다. 모르는 단어가 나와도 흐름을 놓치지 않습니다.',
+    Avg:'어휘력이 학년 평균 수준입니다. 독서량을 늘리면 자연스럽게 어휘가 확장됩니다.',
+    LoAvg:'어휘 학습을 별도로 병행하면 도움이 됩니다. 읽다가 모르는 단어를 기록하는 습관을 들여보세요.',
+    Low:'어휘력 보강이 필요합니다. 단어장 앱이나 플래시카드 학습을 추천드립니다.',
+  },
+  lit:{
+    HiAvg:'소설 속 인물 감정선·복선·주제 파악 능력이 뛰어납니다. 다양한 장르 소설에 도전해 보세요.',
+    Avg:'문학 독해는 학년 평균 수준입니다. 이야기 구조가 풍부한 소설을 꾸준히 읽으면 올라갑니다.',
+    LoAvg:'소설 읽기 경험을 늘리는 것이 가장 효과적입니다. 그림이 많은 챕터북부터 시작해 보세요.',
+    Low:'문학 독해를 집중 보완해야 합니다. 먼저 관심 있는 주제의 짧은 이야기책부터 시작하세요.',
+  },
+};
+
+const LEVEL_ORDER = ['HiAvg','Avg','LoAvg','Low'];
+
+function getSubSkillBarInfo(level) {
+  const map = {
+    HiAvg:{pct:78,color:'linear-gradient(90deg,#2A9D8F,#3DC9B4)',cls:'level-hiavg'},
+    Avg:  {pct:52,color:'linear-gradient(90deg,#C8983F,#E8B96A)',cls:'level-avg'},
+    LoAvg:{pct:32,color:'linear-gradient(90deg,#E8637A,#F4A3B3)',cls:'level-low'},
+    Low:  {pct:16,color:'linear-gradient(90deg,#C0392B,#E57373)',cls:'level-low'},
+  };
+  return map[level] || map['Avg'];
+}
+
+function levelToKorean(l) {
+  return {HiAvg:'상위평균',Avg:'평균',LoAvg:'하위평균',Low:'보완필요'}[l] || l;
+}
+
+const BOOKS = {
+  low:[
+    {e:'🕷️',t:"Charlotte's Web",a:'E.B. White',l:'680L',d:'감정선이 풍부하고 어휘가 아름다운 명작 소설. 문학 약점 보완에 최적입니다.'},
+    {e:'⚡',t:'The Lightning Thief',a:'Percy Jackson #1',l:'680L',d:'판타지를 좋아하는 아이에게 강력 추천. 시리즈물이라 독서 습관 만들기에도 좋습니다.'},
+  ],
+  mid:[
+    {e:'🕵️',t:'From the Mixed-Up Files…',a:'E.L. Konigsburg',l:'700L',d:'미스터리와 모험이 결합된 뉴베리 수상작. 비문학 지식도 자연스럽게 쌓입니다.'},
+    {e:'🦅',t:'My Side of the Mountain',a:'J.C. George',l:'810L',d:'자연 생존기로 비문학 지식이 풍부하게 담겨 있어 강점인 비문학 능력과 시너지가 납니다.'},
+  ],
+  high:[
+    {e:'🏔️',t:'Hatchet',a:'Gary Paulsen',l:'1020L',d:'극적인 서사와 정교한 묘사. 높은 렉사일 도전에 딱 맞는 어드벤처입니다.'},
+    {e:'🧬',t:"Ender's Game",a:'Orson Scott Card',l:'780L',d:'전략적 사고와 복잡한 인물 심리. 고렉사일 아이들에게 최고의 선택입니다.'},
+  ],
+};
+const NONFIC = {
+  low:{e:'🐋',t:'National Geographic Kids',l:'550L~700L',d:'동물·과학 주제. 짧은 글과 사진이 풍부해 비문학 입문에 최적입니다.'},
+  mid:{e:'🏛️',t:'Who Was...? 시리즈',l:'650L~750L',d:'위인·역사 시리즈. 높은 비문학 이해도에 딱 맞으며 국제학교 I&S 과목 배경지식 쌓기에도 최고입니다.'},
+  high:{e:'🔬',t:'DK Eyewitness 시리즈',l:'800L~1000L',d:'백과사전 수준의 비문학. 전문적인 어휘와 깊이 있는 설명으로 높은 렉사일을 충분히 활용합니다.'},
+};
+
+function getBookTier(mid) { return mid < 620 ? 'low' : mid < 850 ? 'mid' : 'high'; }
+
+function buildCard1(rit, norm, diff, grade, termKor, gradeEq) {
+  const diffBadge = (norm && diff !== null)
+    ? `<span class="above-badge">${diff >= 0 ? '+' : ''}${diff}점 ${diff >= 0 ? '상회' : '하회'}</span><span class="avg-text">학년 평균 ${norm}점</span>`
+    : '';
+  return `
+    <div class="rit-score-card">
+      <div><div class="rit-label">${termKor} 현재 점수</div><div class="rit-number">${rit}</div></div>
+      <div style="flex:1;">
+        <div class="rit-desc">미국 ${grade}학년 Reading RIT<br>${gradeEq}</div>
+        <div class="rit-vs-avg">${diffBadge}</div>
+      </div>
+    </div>
+    <div class="insight-block" style="margin-top:0.875rem;">
+      <p><strong>이 점수가 의미하는 것:</strong></p>
+      <p>RIT <strong>${rit}점</strong>은 ${gradeEq}에 해당합니다.${norm ? ` 학년 전국 평균(${norm}점)과 비교하면 <strong>${Math.abs(diff)}점 ${diff >= 0 ? '앞선 우수한' : '뒤처진'}</strong> 수준입니다.` : ''}</p>
+    </div>
+    <div style="margin-top:0.875rem;">
+      ${diff !== null && diff >= 5 ? '<span class="teal-chip">✓ 학년 평균 초과</span>' : ''}
+      <span class="highlight-chip">📈 성장 추이 확인 권장</span>
+    </div>`;
+}
+
+function buildCard2(lex, rit) {
+  const baseL = Math.round(lex.mid / 50) * 50;
+  return `
+    <div style="background:#F4F8FF;border-radius:12px;padding:1rem 1.1rem;margin-top:0.875rem;text-align:center;">
+      <div style="font-size:0.73rem;color:#4A72E8;font-weight:700;letter-spacing:0.08em;margin-bottom:4px;">예측 렉사일 지수 (중간값)</div>
+      <div style="font-family:'Noto Serif KR',serif;font-size:2.4rem;font-weight:700;color:#2D4270;line-height:1;">${lex.mid}L</div>
+      <div style="font-size:0.76rem;color:#8A8AAA;margin-top:4px;">범위: ${lex.lo}L ~ ${lex.hi}L</div>
+    </div>
+    <div class="insight-block" style="margin-top:0.875rem;">
+      <p><strong>이 점수의 의미:</strong></p>
+      <p>RIT ${rit}점은 렉사일 <strong>${lex.mid}L</strong> (범위 ${lex.lo}L~${lex.hi}L)로 예측됩니다. 도서 선택 시 <strong>"${baseL}L 전후"</strong>를 기준으로 고르시면 딱 맞습니다.</p>
+    </div>
+    <div class="warning-box" style="background:rgba(74,114,232,0.07);border-left-color:#4A72E8;margin-top:0.875rem;">
+      📌 <strong>부모님 활용법:</strong> lexile.com 또는 Amazon에서 책 제목 검색 시 렉사일 숫자가 표시됩니다.
+    </div>`;
+}
+
+function buildCard3(subInfo, subVocab, subLit) {
+  function row(emoji, name, level, notes) {
+    const b = getSubSkillBarInfo(level);
+    return `<div class="skill-row">
+      <div class="skill-row-top">
+        <span class="skill-name">${emoji} ${name}</span>
+        <span class="skill-level ${b.cls}">${level} (${levelToKorean(level)})</span>
+      </div>
+      <div class="skill-bar-bg"><div class="skill-bar-fill" style="width:${b.pct}%;background:${b.color};"></div></div>
+      <div class="skill-note">${notes[level]}</div>
+    </div>`;
+  }
+  const levels = [{k:'info',lv:subInfo},{k:'vocab',lv:subVocab},{k:'lit',lv:subLit}];
+  const weakest = levels.slice().sort((a,b) => LEVEL_ORDER.indexOf(b.lv) - LEVEL_ORDER.indexOf(a.lv))[0];
+  const hasWeak = weakest.lv === 'LoAvg' || weakest.lv === 'Low';
+  const focusName = {info:'Informational Text',vocab:'Vocabulary',lit:'Literary Text'}[weakest.k];
+  return `
+    <p style="font-size:0.78rem;color:var(--text-mid);line-height:1.6;margin-bottom:1rem;">결과지 하단 세부 성취 수준 분석입니다.</p>
+    ${row('📰','Informational Text',subInfo,SUBSKILL_NOTES.info)}
+    ${row('🔤','Vocabulary',subVocab,SUBSKILL_NOTES.vocab)}
+    ${row('📖','Literary Text',subLit,SUBSKILL_NOTES.lit)}
+    ${hasWeak
+      ? `<div class="warning-box" style="margin-top:0.5rem;">🎯 <strong>집중 공략 포인트:</strong> ${focusName} 영역 보완이 가장 우선입니다. 아래 추천 도서가 이 영역 강화에 도움이 됩니다.</div>`
+      : '<div class="tip-box" style="margin-top:0.5rem;">✅ <strong>세 영역 모두 안정적입니다!</strong> 지금처럼 균형 잡힌 독서를 유지해 주세요.</div>'}`;
+}
+
+function bookCardHTML(b) {
+  return `<div class="book-card">
+    <div class="book-emoji">${b.e}</div>
+    <div>
+      <div class="book-title-row">《${b.t}》 <span style="font-weight:400;color:var(--text-mid);font-size:0.78rem;">${b.a || ''}</span></div>
+      <div class="book-lexile">${b.l}</div>
+      <div class="book-desc">${b.d}</div>
+    </div>
+  </div>`;
+}
+
+function buildCard4(lexMid) {
+  const tier = getBookTier(lexMid);
+  const books = BOOKS[tier];
+  const nonfic = NONFIC[tier];
+  return `
+    <p style="font-size:0.78rem;color:var(--text-mid);line-height:1.6;margin-bottom:0.5rem;">강점을 유지하며 약한 영역을 보완할 ${lexMid - 50}L~${lexMid + 80}L대 원서를 추천합니다.</p>
+    <span class="book-category-label">📖 문학 — 이야기 재미 붙이기</span>
+    ${books.map(bookCardHTML).join('')}
+    <span class="book-category-label" style="margin-top:1.1rem;">📰 비문학 — 강점 강화하기</span>
+    ${bookCardHTML(nonfic)}
+    <div class="tip-box" style="margin-top:0.875rem;">
+      💡 <strong>도서 선택 꿀팁:</strong> lexile.com에서 책 제목으로 렉사일을 확인하세요. "${lexMid - 50}L~${lexMid + 100}L" 범위로 필터링하면 딱 맞는 책을 쉽게 찾을 수 있어요.
+    </div>`;
+}
+
+// ── Enable button when RIT typed ──
+function onRitInput() {
+  const v = parseInt(document.getElementById('mapRitScore').value);
+  document.getElementById('mapAnalyzeBtn').disabled = !(v >= 100 && v <= 350);
+}
+
+// ── MAP Analysis ──
+function startMapAnalysis() {
+  const rit   = parseInt(document.getElementById('mapRitScore').value);
+  const grade = parseInt(document.getElementById('mapGrade').value) || 4;
+  const term  = document.getElementById('mapTerm').value || 'Winter';
+  if (!(rit >= 100 && rit <= 350)) {
+    document.getElementById('mapRitScore').style.borderColor = '#E8637A';
+    setTimeout(() => { document.getElementById('mapRitScore').style.borderColor = '#E5E0D8'; }, 2000);
+    return;
+  }
+  const termKey = term.toLowerCase();
+  const termKor = {Fall:'가을',Winter:'겨울',Spring:'봄'}[term] || term;
+  const normTable = GRADE_NORMS[grade] ? Math.round(GRADE_NORMS[grade][termKey]) : null;
+  const normInput = parseInt(document.getElementById('mapNormScore').value) || normTable;
+  const diff   = normInput !== null ? rit - normInput : null;
+  const subInfo  = document.getElementById('subInfo').value;
+  const subVocab = document.getElementById('subVocab').value;
+  const subLit   = document.getElementById('subLit').value;
+  const lex      = getLexile(rit);
+  const gradeEq  = getGradeEquivalent(rit);
+
+  // Inject dynamic content into cards
+  document.getElementById('body-mcard1').innerHTML = buildCard1(rit, normInput, diff, grade, termKor, gradeEq);
+  document.getElementById('body-mcard2').innerHTML = buildCard2(lex, rit);
+  document.getElementById('body-mcard3').innerHTML = buildCard3(subInfo, subVocab, subLit);
+  document.getElementById('body-mcard4').innerHTML = buildCard4(lex.mid);
+  document.querySelector('#mcard2 .card-label').textContent = `Reading RIT ${rit}점 기반 렉사일 지수 예측`;
+  document.querySelector('#mcard4 .card-label').textContent = `우리 아이(${lex.mid}L)를 위한 추천 도서 가이드`;
+
+  document.getElementById('mapInputSection').style.display = 'none';
+  document.getElementById('mapSpinnerOverlay').classList.add('active');
+  document.getElementById('mapResultsSection').classList.remove('active');
+  document.querySelector('.section-divider').style.display = 'none';
+
+  setTimeout(() => {
+    document.getElementById('mapSpinnerOverlay').classList.remove('active');
+    document.getElementById('mapResultsSection').classList.add('active');
+    document.getElementById('mapResultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toggleCard('mcard1');
+  }, 2000);
+}
+
+// ── Reset ──
+function resetApp() {
+  document.getElementById('resultsSection').classList.remove('active');
+  document.getElementById('inputSection').style.display = 'block';
+  document.getElementById('commentInput').value = '';
+  ['card1','card2','card3','card4','card5','card6'].forEach(id => {
+    document.getElementById('body-' + id).classList.remove('open');
+    document.getElementById('chevron-' + id).classList.remove('open');
+  });
+  document.getElementById('mapResultsSection').classList.remove('active');
+  document.getElementById('mapInputSection').style.display = 'block';
+  document.querySelector('.section-divider').style.display = 'flex';
+  document.getElementById('mapRitScore').value = '';
+  document.getElementById('mapNormScore').value = '';
+  document.getElementById('mapAnalyzeBtn').disabled = true;
+  ['mcard1','mcard2','mcard3','mcard4'].forEach(id => {
+    document.getElementById('body-' + id).classList.remove('open');
+    document.getElementById('chevron-' + id).classList.remove('open');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
